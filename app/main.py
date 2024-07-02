@@ -10,20 +10,21 @@ def main():
     # Listen for incoming connections
     server_socket.listen(1)
     
-    while True:
+    try:
         connection, client_address = server_socket.accept() # wait for client
-        try:
+        while True:
             request = connection.recv(1024)
-            
+            request_string = request.decode().split(" ")
             print("request received")
             
             
-            connection.send("HTTP/1.1 200 OK\r\n\r\n".encode("utf-8"))
+            if request_string[1] == "/":
+                connection.send("HTTP/1.1 200 OK\r\n\r\n".encode("utf-8"))
+            else:
+                connection.send("HTTP/1.1 404 Not Found\r\n\r\n".encode("utf-8"))
         
-        
-        
-        finally:
-            connection.close()
+    finally:
+        connection.close()
 
 if __name__ == "__main__":
     main()
