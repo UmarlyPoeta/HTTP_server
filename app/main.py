@@ -2,9 +2,19 @@ import socket
 
 server_adress = ("localhost", 4221)
 
-def handling_responses(client_socket,request_status_line):
+def handling_responses(client_socket,request):
     
-    method, path, protocol = request_status_line.split(" ")
+    # decoding request and spliting based on the \r\n
+    status_line,*args = request.decode().split("\r\n")
+    
+    method, path, protocol = status_line.split(" ")
+    
+    if path == "/user-agent":
+        user_agent=args[1]
+        string_from_request = user_agent.split(" ")[-1]
+        client_socket.send(f"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {len(string_from_request)}\r\n\r\n{string_from_request}".encode("utf-8"))
+    
+    
     
     if path.startswith("/echo/"): # /echo/{str} endpoint
         string_from_request = path.split("/")[-1]
@@ -38,11 +48,8 @@ def main():
             
             print("request received")
             
-            # decoding request and spliting based on the whitespaces 
-            status_line, headers, body,*args = request.decode().split("\r\n")
-            
-            #extract_url_path(connection,status_line)
-            handling_responses(connection,status_line)
+            #Function that handles all responses
+            handling_responses(connection,request)
             
             
         
