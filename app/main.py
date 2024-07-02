@@ -1,24 +1,33 @@
 import socket
+import threading
 
 server_adress = ("localhost", 4221)
 
-def handling_responses(client_socket,request):
+def handling_responses(client_socket, request):
     
     # decoding request and spliting based on the \r\n
     status_line,*args = request.decode().split("\r\n")
     
-    method, path, protocol = status_line.split(" ")
+    print(status_line)
+    try:
+        method, path, protocol = status_line.split(" ")
+    except Exception as e:
+        client_socket.send("HTTP/1.1 400 Bad Request\r\n\r\n".encode("utf-8"))
+        return
+    
     
     if path == "/user-agent":
         user_agent=args[1]
         string_from_request = user_agent.split(" ")[-1]
-        client_socket.send(f"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {len(string_from_request)}\r\n\r\n{string_from_request}".encode("utf-8"))
+        response = f"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {len(string_from_request)}\r\n\r\n{string_from_request}"
+        client_socket.send(response.encode("utf-8"))
     
     
     
     if path.startswith("/echo/"): # /echo/{str} endpoint
         string_from_request = path.split("/")[-1]
-        client_socket.send(f"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {len(string_from_request)}\r\n\r\n{string_from_request}".encode("utf-8"))
+        response = f"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {len(string_from_request)}\r\n\r\n{string_from_request}"
+        client_socket.send(response.encode("utf-8"))
     
     
     elif path == "/": #validating url path =="/"
@@ -29,32 +38,30 @@ def handling_responses(client_socket,request):
         client_socket.send("HTTP/1.1 404 Not Found\r\n\r\n".encode("utf-8"))
         
 
+def client_thread(connection):
+    try:
+        while True:
+            request = connection.recv(1024)
+            if not request:
+                break
+            
+            print("request received")
+            handling_responses(connection,request)
+    finally:
+        connection.close()      
 
 
 def main():
     server_socket = socket.create_server(server_adress, reuse_port=True)
-    
-    # Listen for incoming connections
-    server_socket.listen(1)
-    
-    
+    server_socket.listen(5)
+
     try:
-        
-        connection, client_address = server_socket.accept() # wait for client
-        
         while True:
-            #Getting request
-            request: bytes = connection.recv(1024)
+            connection, client_address = server_socket.accept() # wait for client
+            threading.Thread(target=client_thread,args=(connection,)).start()
             
-            print("request received")
-            
-            #Function that handles all responses
-            handling_responses(connection,request)
-            
-            
-        
     finally:
-        connection.close()
+        server_socket.close()
 
 if __name__ == "__main__":
     main()
