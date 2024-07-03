@@ -3,7 +3,7 @@ import threading
 import os
 import sys
 import gzip
-import zlib
+import re
 
 
 server_adress = ("localhost", 4221)
@@ -69,7 +69,7 @@ def handling_responses(client_socket, request):
         user_agent=args[1]
         
         string_from_request = user_agent.split(" ")[-1]
-        if "Accept-Encoding: gzip\r\n" in request.decode():
+        if "Accept-Encoding: gzip\r\n" in request.decode() and "gzip" in request.decode("utf-8"):
             response = f"HTTP/1.1 200 OK\r\nContent-Encoding: gzip\r\nContent-Type: text/plain\r\nContent-Length: {len(string_from_request)}\r\n\r\n{gzip.compress(string_from_request.encode("utf-8"))}"
         else:
             response = f"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {len(string_from_request)}\r\n\r\n{string_from_request}"
@@ -80,7 +80,8 @@ def handling_responses(client_socket, request):
     elif path.startswith("/echo/"): # /echo/{str} endpoint
         string_from_request = path.split("/")[-1]
         
-        if "Accept-Encoding: gzip\r\n" in request.decode():
+        
+        if "Accept-Encoding: " in request.decode() and "gzip" in request.decode("utf-8"):
             response = f"HTTP/1.1 200 OK\r\nContent-Encoding: gzip\r\nContent-Type: text/plain\r\nContent-Length: {len(string_from_request)}\r\n\r\n{gzip.compress(string_from_request.encode("utf-8"))}"
         else:
             response = f"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {len(string_from_request)}\r\n\r\n{string_from_request}"
