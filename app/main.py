@@ -49,7 +49,7 @@ def handle_responses(client_socket, request):
         elif path == "/user-agent":
             user_agent = args[1]
             string_from_request = user_agent.split(" ")[-1]
-            if "Accept-Encoding: gzip" in request.decode("utf-8"):
+            if "Accept-Encoding: " in request.decode("utf-8") and "gzip" in request.decode("utf-8"):
                 compressed_string_from_request = gzip.compress(string_from_request.encode())
                 response = (
                     f"HTTP/1.1 200 OK\r\nContent-Encoding: gzip\r\nContent-Type: text/plain\r\n"
