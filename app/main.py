@@ -2,6 +2,7 @@ import socket
 import threading
 import os
 import sys
+import gzip
 
 
 server_adress = ("localhost", 4221)
